@@ -1,0 +1,11 @@
+langchain-groq
+psycopg2-binary
+python-dotenv
+langchain
+langchain-community
+langchain-core
+langchain-groq
+psycopg2-binary
+python-dotenv
+python-telegram-bot
+requests

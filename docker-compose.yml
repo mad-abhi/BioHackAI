@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bio_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bio_archive
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app:
+    build: ./app
+    container_name: bio_app
+    volumes:
+      - ./app:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+    tty: true
+    stdin_open: true
