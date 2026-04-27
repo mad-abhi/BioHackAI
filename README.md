@@ -1,14 +1,55 @@
-# Bio-Hack AI: The Autonomous Health & Performance OS
+# BioHackAI: Voice-Powered Bio-Archivist 🧬🤖
 
-**Bio-Hack AI** is a production-grade agentic system designed to bridge the gap between "dumb" biometric data (steps, heart rate, sleep) and "subjective" human context (stress, diet, physical pain). 
-
-While wearables track physiological spikes, they often lack the "why." Bio-Hack AI captures the missing middle—contextualizing data like a high heart rate during a stressful meeting versus a caffeine-induced spike—via low-friction voice input and structuring it for long-term physiological optimization.
+BioHackAI is an intelligent, multi-container AI system designed to turn unstructured voice notes into a structured health and lifestyle dashboard. By combining high-end transcription (Whisper), large language model reasoning (Llama 3.3), and seamless cloud synchronization (Notion), it allows for frictionless personal data logging.
 
 ---
 
-## 🏗️ System Architecture & Tech Stack
+##  The Pipeline
+1.  **Voice Input:** User sends a voice note to the Telegram Bot (Opus/OGG format).
+2.  **Transcription:** Groq's **Whisper-large-v3** converts audio to high-accuracy text.
+3.  **Data Extraction:** **Llama 3.3 70B** (via Groq API) parses the text into a structured JSON object (Energy, Mood, Diet, etc.).
+4.  **Local Storage:** Data is stored in a **PostgreSQL** database for long-term analytics and privacy.
+5.  **Cloud Dashboard:** The entry is synced to a **Notion Gallery** for a beautiful, human-readable UI.
 
-The project utilizes a **Modular Agentic Architecture** powered by the **Model Context Protocol (MCP)**. This allows the AI to dynamically "plug in" to various data sources and specialized tools instead of relying on a static script.
+---
+
+##  Tools & Technologies Used
+
+### **Core Infrastructure**
+* **PostgreSQL:** Used as the primary relational database to maintain a permanent local archive of all voice transcripts and structured bio-data.
+* **Docker & Docker Compose:** Orchestrates the multi-container environment, ensuring the Python application and database work together seamlessly.
+
+### **AI & Reasoning**
+* **Groq AI:** Leveraged for ultra-fast inference. 
+    * **Whisper-large-v3:** High-fidelity speech-to-text transcription.
+    * **Llama 3.3 70B:** Powerful LLM used to extract structured insights from conversational speech.
+* **LangChain:** Framework used to manage the AI chains and prompt templates.
+
+### **Integrations**
+* **Telegram Bot API:** The user interface for the project, allowing for easy mobile data entry via voice notes.
+* **Notion API:** Synchronizes structured data to a beautiful, customizable gallery dashboard for the user.
+
+---
+
+##  Skills Demonstrated
+* **Artificial Intelligence:** Speech-to-Text (STT), LLM entity extraction, and prompt engineering.
+* **Backend Development:** Python 3.11, asynchronous API handling with `python-telegram-bot`.
+* **Data Architecture:** Relational schema design and SQL initialization.
+* **DevOps:** Containerization, environment security (`.env`), and Git version control.
+
+---
+
+## 📦 Project Structure
+```text
+BioHackAI/
+├── app/
+│   ├── main.py         # Bot logic & API integrations
+│   └── requirements.txt # Python dependencies
+├── db/
+│   └── init.sql        # Database schema initialization
+├── docker-compose.yml  # Multi-container orchestration
+└── .env                # API Keys (Protected)
+
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
@@ -19,51 +60,8 @@ The project utilizes a **Modular Agentic Architecture** powered by the **Model C
 | **Human Frontend** | Notion | Mirrors the DB into a searchable, aesthetic "Life Session" gallery. |
 | **Infrastructure** | Docker | Ensures identical environments from local dev to AWS. |
 
----
-
-## ⚙️ The Functional Pipeline
-
-### Phase A: The Event Trigger (Real-Time Polling)
-The system runs a background worker that polls health APIs (e.g., Google Fit or specialized MCP servers). 
-* **Detection:** The system notices a specific event, such as a "Deep Sleep" session ending or a "High Intensity" activity being logged.
-* **Action:** It triggers the Telegram Bot to initiate a "Context Retrieval" sequence.
-
-### Phase B: Subjective Capture (Telegram + Whisper)
-The bot pings the user: *"I see a 45-minute HIIT session. Your recovery score is low today. Any specific reason?"*
-1. **Voice Reply:** The user replies with a quick, natural voice note.
-2. **Transcription:** Groq Whisper converts the audio to text instantaneously.
-3. **Structuring:** Llama 3.3 "shreds" that text into a structured JSON object, identifying energy levels, soreness locations, and dietary notes.
-
-### Phase C: The Correlation Engine (MCP + PostgreSQL)
-Using MCP servers, the agent queries the PostgreSQL database to find longitudinal patterns.
-* **Example Query:** *"Identify correlations between 'fasted training' and 'lower back' soreness over the last 30 days."*
-* The agent writes the SQL, executes it via the DB-Server, and returns a natural language summary of the findings.
-
----
-
-## 📊 Database Schema & Data Flow
-
-To ensure the system is more than just a chatbot, the PostgreSQL backend uses a relational model to track progress and health trends.
-
-| Table | Purpose |
-| :--- | :--- |
-| `raw_metrics` | Heart rate, calories, and sleep stages (from Health APIs). |
-| `voice_logs` | Transcriptions and AI-extracted sentiments/tags. |
-| `correlations` | AI-generated insights (e.g., "Lack of sleep leads to 20% lower workout volume"). |
-
----
-
-## 💡 Why This Architecture Matters
-
-* **Zero Friction:** You never have to open a spreadsheet. You simply talk to your "Archivist" while walking, driving, or cooling down from a workout.
-* **Contextual Intelligence:** By using Llama 3.3 70B, the system interprets data rather than just storing it. If you mention "knee pain," it doesn't just save the text; it flags it as an **"Injury Risk"** in your Notion dashboard.
-* **Infinite Extensibility:** Because of the MCP integration, you can easily add a "Weather MCP" to see if environment affects mood, or a "Spotify MCP" to see which music leads to peak performance.
-
----
-
-## 🚀 Deployment 
 
 ### Local Development
 The entire stack is containerized for a one-command setup:
 ```bash
-docker-compose up
+docker-compose up --build -d
