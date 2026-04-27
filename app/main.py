@@ -1,7 +1,8 @@
 import os
 import time
-import psycopg2
+import json        # <--- This was the missing piece!
 import requests
+import psycopg2
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -55,7 +56,44 @@ def transcribe_voice(file_path):
     except Exception as e:
         print(f"❌ Whisper Error: {e}")
         return None
+    
+def save_to_notion(transcript, structured_json):
+    try:
+        # Now that 'json' is imported, this will work
+        data = json.loads(structured_json)
+        url = "https://api.notion.com/v1/pages"
+        headers = {
+            "Authorization": f"Bearer {os.getenv('NOTION_TOKEN').strip()}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
+        }
+        
+        # Fallback for energy value
+        energy_val = data.get("energy_level")
+        try:
+            energy_val = float(energy_val) if energy_val is not None else 0
+        except:
+            energy_val = 0
 
+        payload = {
+            "parent": {"database_id": os.getenv("NOTION_DATABASE_ID").strip()},
+            "properties": {
+                "Name": {"title": [{"text": {"content": f"Entry: {time.strftime('%Y-%m-%d %H:%M')}"}}]},
+                "Transcript": {"rich_text": [{"text": {"content": transcript}}]},
+                "Energy": {"number": energy_val},
+                "Mood": {"rich_text": [{"text": {"content": str(data.get("mood") or "None")}}]},
+                "Diet": {"rich_text": [{"text": {"content": str(data.get("diet_notes") or "None")}}]}
+            }
+        }
+        
+        resp = requests.post(url, headers=headers, json=payload)
+        if resp.status_code == 200:
+            print("📖 Synced to Notion successfully!")
+        else:
+            print(f"❌ Notion Error ({resp.status_code}): {resp.text}")
+    except Exception as e:
+        print(f"❌ Notion Sync Logic Error: {e}")
+        
 # --- NEW: TELEGRAM HANDLER ---
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     voice_file = await context.bot.get_file(update.message.voice.file_id)
@@ -76,12 +114,13 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Process the valid transcript
     structured_data = extract_health_data(transcript)
-    
+        
     if structured_data:
-        save_to_journal(transcript, structured_data)
-        await update.message.reply_text(f"✅ Saved!\n\n📝 Transcript: {transcript}\n\n📊 Data: {structured_data}")
+        save_to_journal(transcript, structured_data) # Saves to Postgres
+        save_to_notion(transcript, structured_data)  # Saves to Notion
+        await update.message.reply_text(f"✅ Saved & Synced to Notion!")
     else:
-        await update.message.reply_text("❌ Failed to structure the data.")
+        await update.message.reply_text("❌ Failed to structure data.")
     
     if os.path.exists(file_path):
         os.remove(file_path)
